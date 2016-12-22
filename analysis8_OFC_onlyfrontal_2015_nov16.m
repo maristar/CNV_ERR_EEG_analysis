@@ -5,7 +5,7 @@
 % is excluded. 
 % additions : new midline frontal area included, data are normalized prior
 % to DTF, frequency ranges according to In, 
-
+tic
 clear all 
 close all
 doi='/Users/mstavrin/Documents/MATLAB/CNV/SetFilesFiltered/Interpolate/ICA/ICA_eyeart_removed/'
@@ -16,7 +16,8 @@ Todoi='/Users/mstavrin/Documents/MATLAB/CNV/ANALYZED_DATASETS/'
 %Todoi='D:\RIKSHOSPITALET\CNV_RIKS\ANALYZED_DATASETS\'%'D:\OFC\ANALYZED_DATASETS'; %
 
 %% Threshold for top 15 strongest couples. 
-crank=15; 
+% crank=15; % Nov 16
+
 %% Look the folders and make the list of the set files in there.
 cd(doi)
 files=dir('*.set');
@@ -36,18 +37,27 @@ clear jj files
 tic
 for kkm=1:ND
     disp(filenames(kkm))
+    filename_set_char=char(['Subj_' filenames{kkm}(1:end-4)]);
     disp(kkm)
         cd(Todoi)
-        % Make a folder to store the results 
+        % Make a folder to store the results with the name and the time
+        % stamp
         stemp=([filenames{kkm}(1:end-4) '-' thismoment 'only_fr'])
-        for jj=1:length(stemp); if ( stemp(jj)=='.' || stemp(jj)==' '); stemp(jj)='_';end; end
+        
+        % Correct if the name has dots or empty spaces
+        for jj=1:length(stemp); 
+            if ( stemp(jj)=='.' || stemp(jj)==' '); stemp(jj)='_';
+            end; 
+        end
+        
+        % Make a directory in the analyzed folder
         mkdir(stemp)
         cd(stemp)
         
         % Initialize the resultscor structure to save the data. 
         resultscor.now=thismoment;
         resultscor.name=filenames{kkm}(1:end-4);
-        clear thismoment
+        %clear thismoment
         %% (1) Load the set with the raw dataset
         [ALLEEG EEG CURRENTSET ALLCOM]=eeglab;
         %cd('D:\RIKSHOSPITALET\CNV RIKS\RAW DATASETS\')
@@ -56,23 +66,26 @@ for kkm=1:ND
         %cd(filenames{kkm})  commented June2014
         %loadname=[filenames{kkm} '_filt.set'] 
         loadname=[filenames{kkm}] 
-        EEG=pop_loadset(loadname)%, STEMP);
+        EEG=pop_loadset(loadname); %, STEMP);
         Fs=EEG.srate;
         [ALLEEG EEG CURRENTSET] = eeg_store(ALLEEG, EEG)
         %eeglab redraw
 
         %% select channels
         Chans_to_take={'E3', 'E123','E124', 'E23', 'E27', 'E24', 'E110', 'E104', 'E109', 'E36', 'E35', 'E40', 'E92', 'E97', 'E91','E51','E52', 'E59', 'E70', 'E75','E83' };
+        % Made in 2016 while working with Ingrid
         cd('/Users/mstavrin/Documents/MATLAB/CNV/Programzs/analysis core frontal/Newnames_electrodes');
         chan_orig=load('chan_orig.mat')
         for kk=1:length(Chans_to_take)
             temp_chan=Chans_to_take(kk);
-            for gg=1:length(chan_orig.chan_orig)
+            for gg=1:length(chan_orig.chan_orig) % 129
                 if strcmp(chan_orig.chan_orig(gg).labels, temp_chan)==1
                     numChannel(kk)=gg;
+                    new_name{kk,:}=chan_orig.chan_orig(gg).newnames
                 end
             end
         end
+        clear kk gg
         N=Chans_to_take;
         clear Chans_to_take;
         %numChannel=[7 11 12 5 6 106 62 72 70 75 83 23 92 97 91 52 51 59]; %numChannel=sort(numChannel)
@@ -129,7 +142,7 @@ for kkm=1:ND
         % Clear EEG ALLEEG CURRENTSET CURRENTSTUDY LASTCOM ALLCOM STUDY fff ttt 
         p=model_order_maria(data, 1, 20); % function model order -- to see what order is good. 
        % close (2:21)
-        
+        display(['Model order is : ' num2str(p)])
         num_epochs=size(data,3);
 %         result1=zeros(nchan, nchan, num_epochs);
 %         result2=zeros(nchan, nchan, num_epochs);
@@ -177,7 +190,7 @@ for kkm=1:ND
 %     figure_temp=['Lines-' textmeasure2 '- ' 'average' name(1:end-4)]; 
 %     saveas(gcf, figure_temp, 'fig')
 % %list of most strong couples
-%     [pcor_list]=majorlist(pcor_average, textmeasure2, now, name, nchan, N, crank)
+%     [pcor_list]=majorlist_nocrank(pcor_average, textmeasure2, now, name, nchan, N, crank)
 % % list of 26 channels with connectivity strength and appearance
 %     [chan_strength_norm, chan_appearance_norm]=strength_appearance(pcor_list.couple_conn, pcor_list.couple_conn_values,N, crank);
 % % input start
@@ -227,7 +240,7 @@ for kkm=1:ND
 %     figure_temp=['Lines-' textmeasure1 '- ' 'average' name(1:end-4)]; 
 %     saveas(gcf, figure_temp, 'fig')
 %     clear figure_temp
-%     [cor_list]=majorlist(cor_average, textmeasure1, now, name, nchan, N, crank)
+%     [cor_list]=majorlist_nocrank(cor_average, textmeasure1, now, name, nchan, N, crank)
 %     [chan_strength_norm, chan_appearance_norm]=strength_appearance(cor_list.couple_conn, cor_list.couple_conn_values,N,crank);
 % % inpout start
 % % 2015, commented 
@@ -263,26 +276,27 @@ for kkm=1:ND
     save DTFthetaOct16 DTFtheta
     disp('Done!!!!')
     textmeasure='DTFtheta'
-    [DTFtheta_list]=majorlist(DTFtheta.meangamma, textmeasure, now, name, nchan, N, crank)
-    DTFtheta.couple_conn=DTFtheta_list.couple_conn;
-    DTFtheta.couple_conn_values=DTFtheta_list.couple_conn_values;
-% appearance-strength
-    [chan_strength_norm, chan_appearance_norm]=strength_appearance(DTFtheta.couple_conn, DTFtheta.couple_conn_values,N, crank);
-    % br_areas=brainar(chan_strength_norm, chan_appearance_norm);
-    
-    stempp=['MostCouples-' textmeasure '-stats']; % do not delete this!!!!
-    xlswrite(stempp, {name}, 'Sheet1', 'A1:A1');
-    titles={name};
-    xlswrite(stempp, (titles), 'Sheet1', 'A2:A2');
-    xlswrite(stempp,N, 'Sheet1', 'B2');
-    xlswrite(stempp, {'strength'}, 'Sheet1', 'A3:A3');
-    xlswrite(stempp,chan_strength_norm, 'Sheet1', 'B3');
-    xlswrite(stempp, {'appearance'}, 'Sheet1', 'A4:A4');
-    xlswrite(stempp,chan_appearance_norm, 'Sheet1', 'B4');
+%     
+%     [DTFtheta_list]=majorlist_nocrank(DTFtheta.meangamma, textmeasure, now, name, nchan, N, crank)
+%     DTFtheta.couple_conn=DTFtheta_list.couple_conn;
+%     DTFtheta.couple_conn_values=DTFtheta_list.couple_conn_values;
+% % appearance-strength
+%     [chan_strength_norm, chan_appearance_norm]=strength_appearance(DTFtheta.couple_conn, DTFtheta.couple_conn_values,N, crank);
+%     % br_areas=brainar(chan_strength_norm, chan_appearance_norm);
+%     
+%     stempp=['MostCouples-' textmeasure '-stats']; % do not delete this!!!!
+%     xlswrite(stempp, {name}, 'Sheet1', 'A1:A1');
+%     titles={name};
+%     xlswrite(stempp, (titles), 'Sheet1', 'A2:A2');
+%     xlswrite(stempp,N, 'Sheet1', 'B2');
+%     xlswrite(stempp, {'strength'}, 'Sheet1', 'A3:A3');
+%     xlswrite(stempp,chan_strength_norm, 'Sheet1', 'B3');
+%     xlswrite(stempp, {'appearance'}, 'Sheet1', 'A4:A4');
+%     xlswrite(stempp,chan_appearance_norm, 'Sheet1', 'B4');
 % save to results.. go to RAW\ 
-    resultscor.(textmeasure).chan_strength_norm=chan_strength_norm;
-    resultscor.(textmeasure).chan_appearance=chan_appearance_norm;
-    resultscor.(textmeasure).couples=DTFtheta_list; %% na to kanw comment k se ola. to couples yparxei 
+%     resultscor.(textmeasure).chan_strength_norm=chan_strength_norm;
+%     resultscor.(textmeasure).chan_appearance=chan_appearance_norm;
+%     resultscor.(textmeasure).couples=DTFtheta_list; %% na to kanw comment k se ola. to couples yparxei 
     % resultscor.(textmeasure).br_areas=br_areas;
     clear chan_appearance_norm chan_strength_norm
     clear br_areas DTFtheta_list textmeasure
@@ -293,130 +307,240 @@ for kkm=1:ND
     cd(Todoi)
     cd(stemp)
     [DTFdelta]=DTF_maria_frontal3_tsa(0.1, 4, p, Fs, data,thismoment, XYZ, N, name, stemp);
-    [DTFdelta_list]=majorlist(DTFdelta.meangamma, textmeasure, now, name, nchan, N,crank)
-    DTFdelta.couple_conn=DTFdelta_list.couple_conn;
-    DTFdelta.couple_conn_values=DTFdelta_list.couple_conn_values;
-    [chan_strength_norm, chan_appearance_norm]=strength_appearance(DTFdelta.couple_conn, DTFdelta.couple_conn_values,N, crank);
-    %br_areas=brainar(chan_strength_norm, chan_appearance_norm);
-    resultscor.(textmeasure).chan_strength_norm=chan_strength_norm;
-    resultscor.(textmeasure).chan_appearance_norm=chan_appearance_norm;%%chan_appearance
-    resultscor.(textmeasure).couples=DTFdelta_list;
-    % resultscor.(textmeasure).br_areas=br_areas;
-% write to excel
-    stempp=['MostCouples-' textmeasure '-stats']; % do not delete this!!!!
-    xlswrite(stempp, {name}, 'Sheet1', 'A1:A1');
-    titles={name};
-    xlswrite(stempp, (titles), 'Sheet1', 'A2:A2');
-    xlswrite(stempp,N, 'Sheet1', 'B2');
-    xlswrite(stempp, {'strength'}, 'Sheet1', 'A3:A3');
-    xlswrite(stempp,chan_strength_norm, 'Sheet1', 'B3');
-    xlswrite(stempp, {'appearance'}, 'Sheet1', 'A4:A4');
-    xlswrite(stempp,chan_appearance_norm, 'Sheet1', 'B4');
-% save to results.. go to RAW\ 
-    clear chan_appearance_norm chan_strength_norm
-    clear br_areas DTFdelta_list    
+    cd(Todoi)
+    cd(stemp)
+    save DTFdelta DTFdelta
+    %     [DTFdelta_list]=majorlist_nocrank(DTFdelta.meangamma, textmeasure, now, name, nchan, N,crank)
+%     DTFdelta.couple_conn=DTFdelta_list.couple_conn;
+%     DTFdelta.couple_conn_values=DTFdelta_list.couple_conn_values;
+%     [chan_strength_norm, chan_appearance_norm]=strength_appearance(DTFdelta.couple_conn, DTFdelta.couple_conn_values,N, crank);
+%     %br_areas=brainar(chan_strength_norm, chan_appearance_norm);
+%     resultscor.(textmeasure).chan_strength_norm=chan_strength_norm;
+%     resultscor.(textmeasure).chan_appearance_norm=chan_appearance_norm;%%chan_appearance
+%     resultscor.(textmeasure).couples=DTFdelta_list;
+%     % resultscor.(textmeasure).br_areas=br_areas;
+% % write to excel
+%     stempp=['MostCouples-' textmeasure '-stats']; % do not delete this!!!!
+%     xlswrite(stempp, {name}, 'Sheet1', 'A1:A1');
+%     titles={name};
+%     xlswrite(stempp, (titles), 'Sheet1', 'A2:A2');
+%     xlswrite(stempp,N, 'Sheet1', 'B2');
+%     xlswrite(stempp, {'strength'}, 'Sheet1', 'A3:A3');
+%     xlswrite(stempp,chan_strength_norm, 'Sheet1', 'B3');
+%     xlswrite(stempp, {'appearance'}, 'Sheet1', 'A4:A4');
+%     xlswrite(stempp,chan_appearance_norm, 'Sheet1', 'B4');
+% % save to results.. go to RAW\ 
+%     clear chan_appearance_norm chan_strength_norm
+%     clear br_areas DTFdelta_list    
     cd ..
 
     textmeasure='DTFalpha';
     [DTFalpha]=DTF_maria_frontal3_tsa(8, 13, p, Fs, data,thismoment, XYZ, N, name, stemp);
-    [DTFalpha_list]=majorlist(DTFalpha.meangamma, textmeasure, now, name, nchan, N, crank)
-    DTFalpha.couple_conn=DTFalpha_list.couple_conn;
-    DTFalpha.couple_conn_values=DTFalpha_list.couple_conn_values;
-    [chan_strength_norm, chan_appearance_norm]=strength_appearance(DTFalpha.couple_conn, DTFalpha.couple_conn_values,N, crank);
-    % br_areas=brainar(chan_strength_norm, chan_appearance_norm);
-    resultscor.(textmeasure).chan_strength_norm=chan_strength_norm;
-    resultscor.(textmeasure).chan_appearance=chan_appearance_norm;
-    resultscor.(textmeasure).couples=DTFalpha_list;
-    % resultscor.(textmeasure).br_areas=br_areas;
-% write to excel
-    stempp=['MostCouples-' textmeasure '-stats']; % do not delete this!!!!
-    xlswrite(stempp, {name}, 'Sheet1', 'A1:A1');
-    titles={name};
-    xlswrite(stempp, (titles), 'Sheet1', 'A2:A2');
-    xlswrite(stempp,N, 'Sheet1', 'B2');
-    xlswrite(stempp, {'strength'}, 'Sheet1', 'A3:A3');
-    xlswrite(stempp,chan_strength_norm, 'Sheet1', 'B3');
-    xlswrite(stempp, {'appearance'}, 'Sheet1', 'A4:A4');
-    xlswrite(stempp,chan_appearance_norm, 'Sheet1', 'B4');
-    clear chan_appearance_norm chan_strength_norm
-    clear DTFbeta_list textmeasure     
-    clear br_areas 
+    cd(Todoi)
+    cd(stemp)
+    save DTFalpha DTFalpha
+    %[DTFalpha_list]=majorlist_nocrank(DTFalpha.meangamma, textmeasure, now, name, nchan, N, crank)
+%     DTFalpha.couple_conn=DTFalpha_list.couple_conn;
+%     DTFalpha.couple_conn_values=DTFalpha_list.couple_conn_values;
+%     [chan_strength_norm, chan_appearance_norm]=strength_appearance(DTFalpha.couple_conn, DTFalpha.couple_conn_values,N, crank);
+%     % br_areas=brainar(chan_strength_norm, chan_appearance_norm);
+%     resultscor.(textmeasure).chan_strength_norm=chan_strength_norm;
+%     resultscor.(textmeasure).chan_appearance=chan_appearance_norm;
+%     resultscor.(textmeasure).couples=DTFalpha_list;
+%     % resultscor.(textmeasure).br_areas=br_areas;
+% % write to excel
+%     stempp=['MostCouples-' textmeasure '-stats']; % do not delete this!!!!
+%     xlswrite(stempp, {name}, 'Sheet1', 'A1:A1');
+%     titles={name};
+%     xlswrite(stempp, (titles), 'Sheet1', 'A2:A2');
+%     xlswrite(stempp,N, 'Sheet1', 'B2');
+%     xlswrite(stempp, {'strength'}, 'Sheet1', 'A3:A3');
+%     xlswrite(stempp,chan_strength_norm, 'Sheet1', 'B3');
+%     xlswrite(stempp, {'appearance'}, 'Sheet1', 'A4:A4');
+%     xlswrite(stempp,chan_appearance_norm, 'Sheet1', 'B4');
+%     clear chan_appearance_norm chan_strength_norm
+%     clear DTFbeta_list textmeasure     
+%     clear br_areas 
     cd ..
 
     textmeasure='DTFbeta';
     [DTFbeta]=DTF_maria_frontal3_tsa(14, 30, p, Fs, data,thismoment, XYZ, N, name, stemp);
-    [DTFbeta_list]=majorlist(DTFbeta.meangamma, textmeasure, now, name, nchan, N, crank)
-    DTFbeta.couple_conn=DTFbeta_list.couple_conn;
-    DTFbeta.couple_conn_values=DTFbeta_list.couple_conn_values;
-    [chan_strength_norm, chan_appearance_norm]=strength_appearance(DTFbeta.couple_conn, DTFbeta.couple_conn_values,N, crank);
-    % br_areas=brainar(chan_strength_norm, chan_appearance_norm);
-    stempp=['MostCouples-' textmeasure '-stats']; % do not delete this!!!!
-    xlswrite(stempp, {name}, 'Sheet1', 'A1:A1');
-    titles={name};
-    xlswrite(stempp, (titles), 'Sheet1', 'A2:A2');
-    xlswrite(stempp,N, 'Sheet1', 'B2');
-    xlswrite(stempp, {'strength'}, 'Sheet1', 'A3:A3');
-    xlswrite(stempp,chan_strength_norm, 'Sheet1', 'B3');
-	xlswrite(stempp, {'appearance'}, 'Sheet1', 'A4:A4');
-    xlswrite(stempp,chan_appearance_norm, 'Sheet1', 'B4');
-% save to results.. go to RAW\ 
-    resultscor.(textmeasure).chan_strength_norm=chan_strength_norm;
-    resultscor.(textmeasure).chan_appearance=chan_appearance_norm;
-    resultscor.(textmeasure).couples=DTFbeta_list;
-    % resultscor.(textmeasure).br_areas=br_areas;
-    resultscor.N=N;
-    clear chan_appearance_norm chan_strength_norm
-    clear br_areas      
-    clear DTFbeta_list textmeasure
+    cd(Todoi)
+    cd(stemp)
+    save DTFbeta DTFbeta
+%     [DTFbeta_list]=majorlist_nocrank(DTFbeta.meangamma, textmeasure, now, name, nchan, N, crank)
+%     DTFbeta.couple_conn=DTFbeta_list.couple_conn;
+%     DTFbeta.couple_conn_values=DTFbeta_list.couple_conn_values;
+%     [chan_strength_norm, chan_appearance_norm]=strength_appearance(DTFbeta.couple_conn, DTFbeta.couple_conn_values,N, crank);
+%     % br_areas=brainar(chan_strength_norm, chan_appearance_norm);
+%     stempp=['MostCouples-' textmeasure '-stats']; % do not delete this!!!!
+%     xlswrite(stempp, {name}, 'Sheet1', 'A1:A1');
+%     titles={name};
+%     xlswrite(stempp, (titles), 'Sheet1', 'A2:A2');
+%     xlswrite(stempp,N, 'Sheet1', 'B2');
+%     xlswrite(stempp, {'strength'}, 'Sheet1', 'A3:A3');
+%     xlswrite(stempp,chan_strength_norm, 'Sheet1', 'B3');
+% 	xlswrite(stempp, {'appearance'}, 'Sheet1', 'A4:A4');
+%     xlswrite(stempp,chan_appearance_norm, 'Sheet1', 'B4');
+% % save to results.. go to RAW\ 
+%     resultscor.(textmeasure).chan_strength_norm=chan_strength_norm;
+%     resultscor.(textmeasure).chan_appearance=chan_appearance_norm;
+%     resultscor.(textmeasure).couples=DTFbeta_list;
+%     % resultscor.(textmeasure).br_areas=br_areas;
+%     resultscor.N=N;
+%     clear chan_appearance_norm chan_strength_norm
+%     clear br_areas      
+%     clear DTFbeta_list textmeasure
     cd ..
 
     textmeasure='DTFgamma1';
-    [DTFgamma1]=DTF_maria_frontal3_tsa(30, 45, p, Fs, data,thismoment, XYZ, N, name, stemp);
-    [DTFgamma1_list]=majorlist(DTFgamma1.meangamma, textmeasure, now, name, nchan, N, crank)
-    DTFgamma1.couple_conn=DTFgamma1_list.couple_conn;
-    DTFgamma1.couple_conn_values=DTFgamma1_list.couple_conn_values;
-    [chan_strength_norm, chan_appearance_norm]=strength_appearance(DTFgamma1.couple_conn, DTFgamma1.couple_conn_values,N, crank);
-    % br_areas=brainar(chan_strength_norm, chan_appearance_norm);
-    resultscor.(textmeasure).chan_strength_norm=chan_strength_norm;
-    resultscor.(textmeasure).chan_appearance_norm=chan_appearance_norm;
-    resultscor.(textmeasure).couples=DTFgamma1_list;
-    % resultscor.(textmeasure).br_areas=br_areas;
-    stempp=['MostCouples-' textmeasure '-stats']; % do not delete this!!!!
-    xlswrite(stempp, {name}, 'Sheet1', 'A1:A1');
-    titles={name};
-    xlswrite(stempp, (titles), 'Sheet1', 'A2:A2');
-    xlswrite(stempp,N, 'Sheet1', 'B2');
-    xlswrite(stempp, {'strength'}, 'Sheet1', 'A3:A3');
-    xlswrite(stempp,chan_strength_norm, 'Sheet1', 'B3');
-    xlswrite(stempp, {'appearance'}, 'Sheet1', 'A4:A4');
-    xlswrite(stempp,chan_appearance_norm, 'Sheet1', 'B4');
-% save to results.. go to RAW\ 
-
-    clear chan_appearance_norm chan_strength_norm
-    clear board board_values br_areas 
     
+    [DTFgamma1]=DTF_maria_frontal3_tsa(30, 45, p, Fs, data,thismoment, XYZ, N, name, stemp);
+    cd(Todoi)
+    cd(stemp)
+    save DTFgamma1 DTFgamma1
+%     [DTFgamma1_list]=majorlist_nocrank(DTFgamma1.meangamma, textmeasure, now, name, nchan, N, crank)
+%     DTFgamma1.couple_conn=DTFgamma1_list.couple_conn;
+%     DTFgamma1.couple_conn_values=DTFgamma1_list.couple_conn_values;
+%     [chan_strength_norm, chan_appearance_norm]=strength_appearance(DTFgamma1.couple_conn, DTFgamma1.couple_conn_values,N, crank);
+%     % br_areas=brainar(chan_strength_norm, chan_appearance_norm);
+%     resultscor.(textmeasure).chan_strength_norm=chan_strength_norm;
+%     resultscor.(textmeasure).chan_appearance_norm=chan_appearance_norm;
+%     resultscor.(textmeasure).couples=DTFgamma1_list;
+%     % resultscor.(textmeasure).br_areas=br_areas;
+%     stempp=['MostCouples-' textmeasure '-stats']; % do not delete this!!!!
+%     xlswrite(stempp, {name}, 'Sheet1', 'A1:A1');
+%     titles={name};
+%     xlswrite(stempp, (titles), 'Sheet1', 'A2:A2');
+%     xlswrite(stempp,N, 'Sheet1', 'B2');
+%     xlswrite(stempp, {'strength'}, 'Sheet1', 'A3:A3');
+%     xlswrite(stempp,chan_strength_norm, 'Sheet1', 'B3');
+%     xlswrite(stempp, {'appearance'}, 'Sheet1', 'A4:A4');
+%     xlswrite(stempp,chan_appearance_norm, 'Sheet1', 'B4');
+% % save to results.. go to RAW\ 
+% 
+%     clear chan_appearance_norm chan_strength_norm
+%     clear board board_values br_areas 
+%     
     cd ..
 
 %% save the results
-    cd(Todoi)
-    resultscor.nchan=nchan;
-    resultscor.num_epochs=num_epochs;
-    resultscor.date=date;
-    resultscor.epocheddata=data;
-    resultscor.s=N;
-    resultscor.XYZ=XYZ;
-    resultscor.resultsDTF.DTFtheta=DTFtheta;
-    resultscor.resultsDTF.DTFdelta=DTFdelta;
-    resultscor.resultsDTF.DTFalpha=DTFalpha;
-    resultscor.resultsDTF.DTFbeta=DTFbeta;
-    resultscor.resultsDTF.DTFgamma1=DTFgamma1;
-    save resultscor resultscor -v7.3
+%     cd(Todoi)
+%     cd(stemp)
+%     resultscor.nchan=nchan;
+%     resultscor.num_epochs=num_epochs;
+%     resultscor.date=date;
+%     resultscor.epocheddata=data;
+%     resultscor.s=N;
+%     resultscor.XYZ=XYZ;
+%     resultscor.resultsDTF.DTFtheta=DTFtheta;
+%     resultscor.resultsDTF.DTFdelta=DTFdelta;
+%     resultscor.resultsDTF.DTFalpha=DTFalpha;
+%     resultscor.resultsDTF.DTFbeta=DTFbeta;
+%     resultscor.resultsDTF.DTFgamma1=DTFgamma1;
+%     save resultscor resultscor -v7.3
 
+    cd(Todoi)
+    resultscorIngrid.nchan=nchan;
+    resultscorIngrid.date=date;
+    resultscorIngrid.s=N;
+    resultscorIngrid.XYZ=XYZ;
+    resultscorIngrid.(filename_set_char).resultsDTF.DTFtheta=DTFtheta;
+    resultscorIngrid.(filename_set_char).resultsDTF.DTFdelta=DTFdelta;
+    resultscorIngrid.(filename_set_char).resultsDTF.DTFalpha=DTFalpha;
+    resultscorIngrid.(filename_set_char).resultsDTF.DTFbeta=DTFbeta;
+    resultscorIngrid.(filename_set_char).resultsDTF.DTFgamma1=DTFgamma1;
+    
+    save resultscorIngrid resultscorIngrid -v7.3
 close all
 clear EEG ALLEEG CURRENTSET data  result1 result2 textmeasure titles ttt stemp stempp num_epochs cor_average cor_list pcor_list resultscor
 clear COR PCOR DTFtheta DTFdelta DTFalpha DTFbeta DTFgamma direct_temp1 direct_temp2 p pcor_average fff DTFalpha_list DTFbeta_list DTFdelta_list DTF_gamma1 DTF_gamma1_list DTFtheta_list ans
 end
+clear kkm
 toc/60
+
+%% Make an average array 
+% Make an average array of 21 x 21
+Average_conn_alpha=zeros(21, 21);
+Average_conn_beta=zeros(21, 21);
+Average_conn_gamma=zeros(21, 21);
+Average_conn_delta=zeros(21, 21);
+Average_conn_theta=zeros(21,21);
+for kk=1:ND
+    disp(filenames(kk))
+    filename_set_char=char(['Subj_' filenames{kk}(1:end-4)]);
+    % For alpha
+    temp=resultscorIngrid.(filename_set_char).resultsDTF.DTFalpha.meangamma;
+    Average_conn_alpha=Average_conn_alpha+temp;
+    clear temp
+    if kk==ND
+        Average_conn_alpha=Average_conn_alpha/ND;
+    end
+    
+    % For delta
+    temp=resultscorIngrid.(filename_set_char).resultsDTF.DTFdelta.meangamma;
+    Average_conn_delta=Average_conn_delta+temp;
+    clear temp
+    if kk==ND
+        Average_conn_delta=Average_conn_delta/ND;
+    end
+    
+    % For Beta
+    temp=resultscorIngrid.(filename_set_char).resultsDTF.DTFbeta.meangamma;
+    Average_conn_beta=Average_conn_beta+temp;
+    clear temp
+    if kk==ND
+        Average_conn_beta=Average_conn_beta/ND;
+    end
+    
+    % For gamma
+    temp=resultscorIngrid.(filename_set_char).resultsDTF.DTFgamma1.meangamma;
+    Average_conn_gamma=Average_conn_gamma+temp;
+    clear temp
+    if kk==ND
+        Average_conn_gamma=Average_conn_gamma/ND;
+    end
+    
+    % For theta
+    temp=resultscorIngrid.(filename_set_char).resultsDTF.DTFtheta.meangamma;
+    Average_conn_theta=Average_conn_theta+temp;
+    clear temp
+    clear filename_set_char
+    if kk==ND
+        Average_conn_theta=Average_conn_theta/ND;
+    end
+end 
+clear kk
+
+
+% Save the results
+cd(Todoi)
+save Average_conn_all Average_conn*
+
+%% Make the top 15 pairs
+crank=15;
+N=new_name';
+% For theta
+textmeasure='theta';
+ [DTFtheta_list]=majorlist(Average_conn_theta, textmeasure, now, name, nchan, N, crank)
+
+ % For alpha
+ textmeasure='alpha';
+  [DTFalpha_list]=majorlist(Average_conn_alpha, textmeasure, now, name, nchan, N, crank)
+
+% For delta
+ textmeasure='delta';
+  [DTFdelta_list]=majorlist(Average_conn_delta, textmeasure, now, name, nchan, N, crank)
+
+% For gamma
+ textmeasure='gamma';
+  [DTFgamma_list]=majorlist(Average_conn_gamma, textmeasure, now, name, nchan, N, crank)
+
+% For beta
+ textmeasure='beta';
+  [DTFbeta_list]=majorlist(Average_conn_beta, textmeasure, now, name, nchan, N, crank)
+
+ toc 
 % %% wavelet analysis
 % width = input('With starting width     ');
 % freqN = input('frequency to start?        ');

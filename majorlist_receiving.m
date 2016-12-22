@@ -1,4 +1,4 @@
-function [CON]=majorlist(average_conn, textmeasure, now, name, nchan, s, crank)
+function [CON]=majorlist_receiving(average_conn, textmeasure, now, name, nchan, s, crank)
 % DEFINE LIST WITH 10 or 15 (Crank) MOST ACTIVE ELECTRODE COUPLES 
 
 average_conn=tril(average_conn,-1); 
@@ -6,10 +6,20 @@ average_conn=tril(average_conn,-1);
 % Lower left gives receiving, Upper right gives sending. 
 %crank=15; % the top channels (how many we want)
 [Megisti,ind]=sort(average_conn(:),'descend');
+% In general 'ind' is the number refering to the values inside the array 
+% For example, if the first element of Megisti (the maximum) is
+% Megisti(1)=0.9052 and the
+% ind(1)=298, then average_conn(298)=Megisti. 
+% This one index refers to the 2-D (i,j) index of an array. Matlab counts 
+% column-wise (i think).. 
+% Find the non-zeros in Megisti. We have a lot of zeros because, it is onlu
+% the lower part below the diagonal.
 [r, c, v]=find(Megisti);% [row, columns, logicalvalue]=find non zeros in Megisti. Correction 2012 for elimination of zeros
 Megisti=Megisti(r);
 
+% Take the 15 first (crank=15) of Megisti and of ind.
 Megisti = Megisti(1:crank); ind=ind(1:crank);
+% Get for this one index to the 2-D index
 [row col] = ind2sub(size(average_conn),ind);
 couple_conn={};
 

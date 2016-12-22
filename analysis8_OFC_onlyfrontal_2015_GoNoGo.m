@@ -32,6 +32,9 @@ thismoment=datestr(now);
 for jj=1:length(thismoment); if ( thismoment(jj)==':' || thismoment(jj)==' '); thismoment(jj)='-';end; end
 clear jj files
 
+%% Define the time parts
+time_parts={'early', 'late', 'alltime'};
+time_parts_values=[[0.5 1.0 ], [3.2 3.7], [0.5 3.7]];
 % Start 
 tic
 for kkm=1:ND
@@ -96,11 +99,15 @@ for kkm=1:ND
         %% Epoch 
         % Here we can separate in sessions
         sessions={'Go__', 'NoGo'};
-%         for kks=1:length(sessions)
-%             session_temp=sessions(1);
-        EEG=pop_epoch(EEG, { 'Go__' }, [-1 4.75], 'newname', [stemp '_sel_epoched']); % Here we change manually, Go__ eller NoGo
+        for kks=1:length(sessions)
+            session_temp=sessions(kks);
+            EEG=pop_epoch(EEG, session_temp, [-1 4.7], 'newname', [stemp '_sel_epoched']); % Here we change manually, Go__ eller NoGo
+        % Problem with this is that NoGO does not run. November 2014
+        
+        %EEG=pop_epoch(EEG, { 'Go__'}, [-1 4.75], 'newname', [stemp '_sel_epoched']); % Here we change manually, Go__ eller NoGo
         EEG=pop_rmbase(EEG, [-500 -50]);
         eeglab redraw
+        time_parts={'early', 'late', 'alltime'};
         % Now cut the useful interval of 1.4 until 4.75
         EEG = pop_select(EEG, 'time', [3.75 4.75]); % new interval 4.10.16 EEG = pop_select(EEG, 'time', [3 4.75]); for the second component 'notrial', [28 34 49 51 56 57]); for 102
         eeglab redraw
@@ -255,11 +262,17 @@ for kkm=1:ND
 %     clear textmeasure1 textmeasure2 tempiii direct_temp1 direct_temp2 fff
 %     cd ..
 %% DTF
-    
+        cd(Todoi)
+    cd(stemp)
+    session_temp_char=char(session_temp);
+    mkdir(session_temp_char)
+    cd(session_temp_char)
     %cd(['D:\RIKSHOSPITALET\CNV RIKS\ANALYZED DATASETS\' stemp])
     [DTFtheta]=DTF_maria_frontal3_tsa(4, 7, p, Fs, data,thismoment, XYZ, N, name, stemp);
     cd(Todoi)
     cd(stemp)
+    cd(session_temp_char)
+    
     save DTFthetaOct16 DTFtheta
     disp('Done!!!!')
     textmeasure='DTFtheta'
@@ -292,6 +305,7 @@ for kkm=1:ND
     % Here 4.10.2016
     cd(Todoi)
     cd(stemp)
+    cd(session_temp_char)
     [DTFdelta]=DTF_maria_frontal3_tsa(0.1, 4, p, Fs, data,thismoment, XYZ, N, name, stemp);
     [DTFdelta_list]=majorlist(DTFdelta.meangamma, textmeasure, now, name, nchan, N,crank)
     DTFdelta.couple_conn=DTFdelta_list.couple_conn;
@@ -399,23 +413,27 @@ for kkm=1:ND
 
 %% save the results
     cd(Todoi)
+    mkdir(session_temp_char)
+    cd(session_temp_char)
     resultscor.nchan=nchan;
     resultscor.num_epochs=num_epochs;
     resultscor.date=date;
     resultscor.epocheddata=data;
     resultscor.s=N;
     resultscor.XYZ=XYZ;
-    resultscor.resultsDTF.DTFtheta=DTFtheta;
-    resultscor.resultsDTF.DTFdelta=DTFdelta;
-    resultscor.resultsDTF.DTFalpha=DTFalpha;
-    resultscor.resultsDTF.DTFbeta=DTFbeta;
-    resultscor.resultsDTF.DTFgamma1=DTFgamma1;
+    resultscor.(session_temp_char).resultsDTF.DTFtheta=DTFtheta;
+    resultscor.(session_temp_char).resultsDTF.DTFdelta=DTFdelta;
+    resultscor.(session_temp_char).resultsDTF.DTFalpha=DTFalpha;
+    resultscor.(session_temp_char).resultsDTF.DTFbeta=DTFbeta;
+    resultscor.(session_temp_char).resultsDTF.DTFgamma1=DTFgamma1;
     save resultscor resultscor -v7.3
-
-close all
-clear EEG ALLEEG CURRENTSET data  result1 result2 textmeasure titles ttt stemp stempp num_epochs cor_average cor_list pcor_list resultscor
 clear COR PCOR DTFtheta DTFdelta DTFalpha DTFbeta DTFgamma direct_temp1 direct_temp2 p pcor_average fff DTFalpha_list DTFbeta_list DTFdelta_list DTF_gamma1 DTF_gamma1_list DTFtheta_list ans
-end
+clear data textmeasure titles ttt stempp num_epochs resultscor    
+close all
+        end % For every session 
+clear EEG ALLEEG CURRENTSET 
+
+end % For every subject
 toc/60
 % %% wavelet analysis
 % width = input('With starting width     ');

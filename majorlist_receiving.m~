@@ -1,4 +1,4 @@
-function [CON]=majorlist(average_conn, textmeasure, now, name, nchan, s, crank)
+function [CON]=majorlist_receiving(average_conn, textmeasure, now, name, nchan, s, crank)
 % DEFINE LIST WITH 10 or 15 (Crank) MOST ACTIVE ELECTRODE COUPLES 
 
 average_conn=tril(average_conn,-1); 
@@ -6,6 +6,9 @@ average_conn=tril(average_conn,-1);
 % Lower left gives receiving, Upper right gives sending. 
 %crank=15; % the top channels (how many we want)
 [Megisti,ind]=sort(average_conn(:),'descend');
+% In general 'ind' is the number refering to the values inside the array. 
+% For example, if the first element (the maximum) is 0.9052 and the
+% ind(1)=298, then 
 [r, c, v]=find(Megisti);% [row, columns, logicalvalue]=find non zeros in Megisti. Correction 2012 for elimination of zeros
 Megisti=Megisti(r);
 

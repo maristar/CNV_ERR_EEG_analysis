@@ -156,6 +156,7 @@ title([name(1:end-4) '-receiving DTF-freq-' num2str(low_freq) '-' num2str(high_f
 figure_temp=[name(1:end-4) '-DTF-receiving' num2str(low_freq) '-' num2str(high_freq) '-Hz'];
 for jj=1:length(figure_temp); if (figure_temp(jj)=='.' || figure_temp(jj)==':'); figure_temp(jj)='-';end; end
 saveas(gcf, figure_temp, 'fig');
+disp([stemp '_figures from DTF_maria_frontal3_tsa.m saved at ' pwd])
 % figure;
 % subplot(2,2,1);imagesc(COH_tot);colorbar;title('maxCOH')
 % subplot(2,2,2);imagesc(DTF_tot);colorbar;title('maxPDC')
@@ -822,7 +823,7 @@ end;
 % 
 % RSS Feed
 % 
-% Copyright © 2006 Koders  -  Searching 512,549,710 lines of code.
+% Copyright ? 2006 Koders  -  Searching 512,549,710 lines of code.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -914,7 +915,7 @@ end;
 % 
 % RSS Feed
 % 
-% Copyright © 2006 Koders  -  Searching 512,549,710 lines of code.
+% Copyright ? 2006 Koders  -  Searching 512,549,710 lines of code.
 function data=filter_data(data,from,to,Fs)
 % eg from=5; to=45
 %Fs=1000;
