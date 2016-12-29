@@ -8,10 +8,10 @@
 tic
 clear all 
 close all
-doi='/Users/mstavrin/Documents/MATLAB/CNV/SetFilesFiltered/Interpolate/ICA/ICA_eyeart_removed/'
+doi='M:\pc\Dokumenter\MATLAB\CNV_dec16\SetFilesFiltered\Interpolate\ICA\ICA_eyeart_removed\'
 %'/Users/mstavrin/Documents/MATLAB/CNV/SetFilesFiltered/Interpolate/ICA/' %
 % changed 24.11.2014
-Todoi='/Users/mstavrin/Documents/MATLAB/CNV/ANALYZED_DATASETS/'
+Todoi='M:\pc\Dokumenter\MATLAB\CNV_dec16\ANALYZED_DATASETS\'
 %doi='D:\RIKSHOSPITALET\CNV_RIKS\RAW DATASETS\After_eye_art_removal'% 'D:\OFC\SETS_correct_locations\';
 %Todoi='D:\RIKSHOSPITALET\CNV_RIKS\ANALYZED_DATASETS\'%'D:\OFC\ANALYZED_DATASETS'; %
 
@@ -35,7 +35,7 @@ clear jj
 
 % Start 
 tic
-for kkm=1%:ND
+for kkm=1:ND
     disp(filenames(kkm))
     filename_set_char=char(['Subj_' filenames{kkm}(1:end-4)]);
     disp(kkm)
@@ -76,7 +76,7 @@ for kkm=1%:ND
     Chans_to_take={'E3', 'E123','E124', 'E23', 'E27', 'E24', 'E110', 'E104', 'E109', 'E36', 'E35', 'E40', 'E92', 'E97', 'E91','E51','E52', 'E59', 'E70', 'E75','E83' };
     % Made in 2016 while working with Ingrid
     % Load the names of those channels, names given by us. 
-    cd('/Users/mstavrin/Documents/MATLAB/CNV/Programzs/analysis core frontal/Newnames_electrodes');
+    cd('M:\pc\Dokumenter\MATLAB\CNV\CNV_analysis-master\Newnames_electrodes');
     chan_orig=load('chan_orig.mat')
     for kk=1:length(Chans_to_take)
         temp_chan=Chans_to_take(kk);
@@ -113,7 +113,7 @@ for kkm=1%:ND
     %% Epoch 
     % Here we can separate in sessions
     sessions={'Go__', 'NoGo'};
-    EEG=pop_epoch(EEG, { 'Go__' }, [-1 4.75], 'newname', [stemp '_sel_epoched']); % Here we change manually, Go__ eller NoGo
+    EEG=pop_epoch(EEG, { 'NoGo' }, [-1 4.75], 'newname', [stemp '_sel_epoched']); % Here we change manually, Go__ eller NoGo
     EEG=pop_rmbase(EEG, [-500 -50]);
     eeglab redraw
     % Now cut the useful interval of 1.4 until 4.75
@@ -321,9 +321,16 @@ for kkm=1%:ND
     resultscorIngrid.(filename_set_char).resultsDTF.DTFgamma1=DTFgamma1;
     
     save resultscorIngrid resultscorIngrid -v7.3
+    
+    disp(['Max of theta is :' num2str(max(max(DTFtheta.meangamma)))]);
+    disp(['Max of delta is :' num2str(max(max(DTFdelta.meangamma)))]);
+    disp(['Max of alpha is :' num2str(max(max(DTFalpha.meangamma)))]);
+    disp(['Max of beta is :' num2str(max(max(DTFbeta.meangamma)))]);
+    disp(['Max of gamma1 is :' num2str(max(max(DTFgamma1.meangamma)))]);
+    
 close all
 clear EEG ALLEEG CURRENTSET data  result1 result2 textmeasure titles ttt stemp stempp num_epochs cor_average cor_list pcor_list resultscor
-clear COR PCOR DTFtheta DTFdelta DTFalpha DTFbeta DTFgamma direct_temp1 direct_temp2 p pcor_average fff DTFalpha_list DTFbeta_list DTFdelta_list DTF_gamma1 DTF_gamma1_list DTFtheta_list ans
+clear COR PCOR direct_temp1 direct_temp2 p pcor_average fff DTFalpha_list DTFbeta_list DTFdelta_list DTF_gamma1 DTF_gamma1_list DTFtheta_list ans
 end
 clear kkm
 toc/60
@@ -335,7 +342,7 @@ Average_conn_beta=zeros(21, 21);
 Average_conn_gamma=zeros(21, 21);
 Average_conn_delta=zeros(21, 21);
 Average_conn_theta=zeros(21,21);
-for kk=1%:ND
+for kk=1:ND
     disp(filenames(kk))
     filename_set_char=char(['Subj_' filenames{kk}(1:end-4)]);
     % For alpha
@@ -391,25 +398,31 @@ crank=15;
 N=new_name';
 % For theta
 textmeasure='theta';
- [DTFtheta_list]=majorlist(Average_conn_theta, textmeasure, now, name, nchan, N, crank)
+ [DTFtheta_list]=majorlist_all(Average_conn_theta, textmeasure, now, name, nchan, N, crank)
 
  % For alpha
  textmeasure='alpha';
-  [DTFalpha_list]=majorlist(Average_conn_alpha, textmeasure, now, name, nchan, N, crank)
+  [DTFalpha_list]=majorlist_all(Average_conn_alpha, textmeasure, now, name, nchan, N, crank)
 
 % For delta
  textmeasure='delta';
-  [DTFdelta_list]=majorlist(Average_conn_delta, textmeasure, now, name, nchan, N, crank)
+  [DTFdelta_list]=majorlist_all(Average_conn_delta, textmeasure, now, name, nchan, N, crank)
 
 % For gamma
  textmeasure='gamma';
-  [DTFgamma_list]=majorlist(Average_conn_gamma, textmeasure, now, name, nchan, N, crank)
+  [DTFgamma_list]=majorlist_all(Average_conn_gamma, textmeasure, now, name, nchan, N, crank)
 
 % For beta
  textmeasure='beta';
-  [DTFbeta_list]=majorlist(Average_conn_beta, textmeasure, now, name, nchan, N, crank)
+  [DTFbeta_list]=majorlist_all(Average_conn_beta, textmeasure, now, name, nchan, N, crank)
 
  toc 
+ 
+ 
+ 
+ 
+ 
+ 
 % %% wavelet analysis
 % width = input('With starting width     ');
 % freqN = input('frequency to start?        ');
