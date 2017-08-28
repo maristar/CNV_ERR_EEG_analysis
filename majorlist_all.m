@@ -43,9 +43,9 @@ xlswrite(stempp,couple_conn_values, 'Sheet1', 'B3')
 % Send the results to excel file, new Dec 2016
 % by making a table and then exporting to excel
 % Need to try this on a windows machine. 
-%  A3=table((couple_conn')', [couple_conn_values']')%, 'VariableNames', {'couples','values'});
-% filename_to_save_xls=['MostCouples-dec16-' textmeasure '.csv'];
-% writetable(A3, filename_to_save_xls);
+ A3=table((couple_conn')', [couple_conn_values']')%, 'VariableNames', {'couples','values'});
+filename_to_save_xls=['MostCouples-dec16-' textmeasure '.csv'];
+writetable(A, filename_to_save_xls);
 
 
 
